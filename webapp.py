@@ -1,10 +1,11 @@
 import streamlit as st
 import pandas as pd
 import pickle
+import re
 
-st.set_page_config(page_title="NextAnime Recommender 🎌", layout="wide")
+st.set_page_config(page_title="Anime Recommender", layout="centered")
 
-# Load Data
+# Load data
 @st.cache_data
 def load_data():
     with open("anime_data.pkl", "rb") as f:
@@ -15,10 +16,7 @@ def load_data():
 
 anime_df, similarity = load_data()
 
-# Helper
 def truncate_description(text, max_len=300):
-    if not text:
-        return "No description available."
     if len(text) <= max_len:
         return text
     truncated = text[:max_len]
@@ -29,7 +27,7 @@ def recommend_anime(title, top_n=5):
     title = title.lower()
     matches = anime_df[anime_df['title'].str.lower() == title]
     if matches.empty:
-        st.error("❌ Anime not found. Try another title.")
+        st.error("Anime not found.")
         return []
     idx = matches.index[0]
     sim_scores = list(enumerate(similarity[idx]))
@@ -48,89 +46,108 @@ def recommend_anime(title, top_n=5):
     return recommendations
 
 
-# 🌈 — Modern Anime-Themed CSS
+# ---------- Elegant and Mature CSS ----------
 st.markdown("""
 <style>
-html, body, [class*="css"] {
-    font-family: 'Poppins', sans-serif;
-    color: #e5e7eb;
-    background: radial-gradient(circle at top left, #101820, #000000);
+html, body, [class*="css"]  {
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    scroll-behavior: smooth;
+    color: #e4e6eb;
 }
+
 [data-testid="stAppViewContainer"] {
-    background: linear-gradient(135deg, #0d0d0f 30%, #141826 100%);
+    background: linear-gradient(180deg, #0d1117, #161b22);
+    padding: 2rem 2rem 4rem;
 }
-[data-testid="stSidebar"] {
-    background: rgba(10, 10, 20, 0.6);
-    backdrop-filter: blur(15px);
-    border-right: 1px solid rgba(255,255,255,0.1);
+
+[data-testid="stHeader"] {
+    background: transparent;
 }
+
 h1, h2, h3 {
-    color: #89CFF0 !important;
-    font-weight: 700;
+    color: #ffffff;
+    font-weight: 600;
 }
+
 .stButton>button {
-    background: linear-gradient(90deg, #1e90ff, #8a2be2);
-    border: none;
+    background-color: #0078d4;
     color: white;
-    border-radius: 10px;
-    padding: 0.6rem 1.5rem;
-    font-weight: 600;
-    transition: all 0.25s ease;
-    box-shadow: 0 0 15px rgba(138,43,226,0.4);
+    border-radius: 6px;
+    padding: 0.6rem 1.4rem;
+    font-weight: 500;
+    border: none;
+    transition: background 0.2s ease;
 }
+
 .stButton>button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 20px rgba(30,144,255,0.6);
+    background-color: #005fa3;
 }
+
 .stImage>img {
-    border-radius: 16px;
-    box-shadow: 0 0 10px rgba(255,255,255,0.08);
+    border-radius: 10px;
+    border: 1px solid #2f3136;
 }
+
 .stContainer {
-    background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(12px);
-    padding: 1rem 1.5rem;
-    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0.03);
+    padding: 1rem;
+    border-radius: 10px;
     margin-bottom: 1rem;
-    transition: all 0.3s ease;
-    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 1px 10px rgba(0,0,0,0.15);
 }
-.stContainer:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 0 25px rgba(138,43,226,0.25);
-}
+
 a {
-    color: #93c5fd;
+    color: #58a6ff;
     text-decoration: none;
-    font-weight: 600;
 }
+
 a:hover {
     text-decoration: underline;
-    color: #60a5fa;
+}
+
+.title-bar {
+    background: linear-gradient(90deg, #005fa3, #0078d4);
+    padding: 1.2rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+    text-align: center;
+}
+.title-bar h1 {
+    color: white;
+    margin: 0;
+    font-size: 1.8rem;
+    letter-spacing: 0.5px;
+}
+.subtitle {
+    color: #c9d1d9;
+    font-size: 0.95rem;
+    margin-top: 0.4rem;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# 🎴 Main Title
-st.markdown("<h1 style='text-align:center;'>🌸 NextAnime — Your AI Otaku Companion</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align:center; color: #b3b3b3;'>Find your next obsession. Powered by data. Styled for weebs.</p>", unsafe_allow_html=True)
-st.markdown("---")
 
-# 🎭 Genre filter
+# ---------- UI Structure ----------
+
+st.markdown("""
+<div class="title-bar">
+    <h1>Anime Recommender System</h1>
+    <div class="subtitle">Discover anime titles that resonate with your preferences.</div>
+</div>
+""", unsafe_allow_html=True)
+
+# Genre filter
 all_genres = sorted(set(genre for genres in anime_df["genres"].str.split(", ") for genre in genres if genre))
-selected_genres = st.multiselect("🎭 Filter by Genres", all_genres, help="Select genres to narrow down recommendations.")
+selected_genres = st.multiselect("Filter by Genres (Optional)", all_genres)
 
-# 🎞️ Main Input
-col1, col2 = st.columns([2, 1])
-with col1:
-    selected_anime = st.selectbox("🎬 Choose Your Anime", sorted(anime_df["title"].dropna().unique()))
-with col2:
-    top_n = st.slider("🔢 How Many Recs?", 3, 10, 5)
+# Main form
+selected_anime = st.selectbox("Select an Anime", sorted(anime_df["title"].dropna().unique()))
+top_n = st.slider("Number of Recommendations", 1, 10, 5)
+sort_by = st.selectbox("Sort Recommendations By", ["Similarity", "Average Score", "Popularity"])
 
-sort_by = st.selectbox("⚙️ Sort Recommendations By", ["Similarity", "Average Score", "Popularity"])
-
-# 🚀 Action
-if st.button("✨ Recommend Me Something Cool!"):
+# Recommend Button
+if st.button("Generate Recommendations"):
     results = recommend_anime(selected_anime, top_n=top_n)
     if selected_genres:
         results = [rec for rec in results if any(g in rec["genres"].split(", ") for g in selected_genres)]
@@ -140,9 +157,9 @@ if st.button("✨ Recommend Me Something Cool!"):
         results = sorted(results, key=lambda x: anime_df[anime_df["title"] == x["title"]]["popularity"].iloc[0], reverse=True)
 
     if not results:
-        st.warning("😔 No recommendations match the selected genres. Try fewer filters!")
+        st.warning("No recommendations found for the selected filters.")
     else:
-        st.markdown(f"<h2>🔥 Top Picks for <span style='color:#8be9fd'>{selected_anime}</span>:</h2>", unsafe_allow_html=True)
+        st.subheader(f"Recommendations similar to **{selected_anime}**")
         for rec in results:
             with st.container():
                 col1, col2 = st.columns([1, 3])
@@ -150,8 +167,6 @@ if st.button("✨ Recommend Me Something Cool!"):
                     st.image(rec["cover"], use_container_width=True)
                 with col2:
                     st.markdown(f"### [{rec['title']}]({rec['anilist_url']})")
-                    st.markdown(f"⭐ **Score:** {rec['score'] or 'N/A'}")
-                    st.markdown(f"🎭 **Genres:** _{rec['genres']}_")
-                    st.markdown(f"📝 **Description:** {truncate_description(rec['description'])}")
-
-st.markdown("<br><hr><center><small>Made with 💙 by Otaku Devs for Otaku Fans — powered by Streamlit</small></center>", unsafe_allow_html=True)
+                    st.markdown(f"**Genres:** _{rec['genres']}_")
+                    st.markdown(f"**Average Score:** `{rec['score'] or 'N/A'}`")
+                    st.markdown(f"**Description:** {truncate_description(rec['description'])}")
