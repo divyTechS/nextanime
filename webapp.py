@@ -3,9 +3,14 @@ import pandas as pd
 import pickle
 import re
 
-st.set_page_config(page_title="Anime Recommender", layout="centered")
+# Page Configuration
+st.set_page_config(
+    page_title="OtakuLens: Anime Recommender",
+    layout="wide",
+    page_icon="🎌",
+)
 
-# Load data
+# Load Data
 @st.cache_data
 def load_data():
     with open("anime_data.pkl", "rb") as f:
@@ -16,7 +21,8 @@ def load_data():
 
 anime_df, similarity = load_data()
 
-def truncate_description(text, max_len=300):
+# Utility
+def truncate_description(text, max_len=250):
     if len(text) <= max_len:
         return text
     truncated = text[:max_len]
@@ -27,7 +33,7 @@ def recommend_anime(title, top_n=5):
     title = title.lower()
     matches = anime_df[anime_df['title'].str.lower() == title]
     if matches.empty:
-        st.error("Anime not found.")
+        st.error("No match found. Please try another title.")
         return []
     idx = matches.index[0]
     sim_scores = list(enumerate(similarity[idx]))
@@ -45,128 +51,152 @@ def recommend_anime(title, top_n=5):
         })
     return recommendations
 
-
-# ---------- Elegant and Mature CSS ----------
+# 🎨 Modern Animated CSS
 st.markdown("""
 <style>
-html, body, [class*="css"]  {
-    font-family: 'Inter', 'Segoe UI', sans-serif;
-    scroll-behavior: smooth;
-    color: #e4e6eb;
-}
-
+/* Background gradient with parallax feel */
 [data-testid="stAppViewContainer"] {
-    background: linear-gradient(180deg, #0d1117, #161b22);
-    padding: 2rem 2rem 4rem;
+    background: linear-gradient(135deg, #0f0f1a 0%, #12121e 50%, #1a1a2e 100%);
+    color: #f2f2f2;
+    padding-top: 1.5rem;
 }
 
-[data-testid="stHeader"] {
-    background: transparent;
+/* Elegant glass-like content container */
+.main-container {
+    background: rgba(25, 25, 40, 0.8);
+    border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 0 25px rgba(0,0,0,0.4);
+    transition: all 0.3s ease;
+}
+.main-container:hover {
+    box-shadow: 0 0 40px rgba(0, 119, 255, 0.4);
 }
 
-h1, h2, h3 {
-    color: #ffffff;
-    font-weight: 600;
+/* Headings */
+h1 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    color: #a2c8ff;
+    text-align: center;
+    letter-spacing: 1px;
+    text-shadow: 0 0 10px rgba(162, 200, 255, 0.4);
+}
+h3 {
+    color: #e4e4f7;
 }
 
+/* Buttons */
 .stButton>button {
-    background-color: #0078d4;
+    background: linear-gradient(90deg, #005bea, #00c6fb);
     color: white;
-    border-radius: 6px;
-    padding: 0.6rem 1.4rem;
-    font-weight: 500;
     border: none;
-    transition: background 0.2s ease;
+    border-radius: 10px;
+    padding: 0.6rem 1.5rem;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: 0.3s;
+    box-shadow: 0 0 10px rgba(0,150,255,0.3);
 }
-
 .stButton>button:hover {
-    background-color: #005fa3;
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(0,150,255,0.6);
 }
 
-.stImage>img {
-    border-radius: 10px;
-    border: 1px solid #2f3136;
-}
-
-.stContainer {
-    background-color: rgba(255, 255, 255, 0.03);
+/* Anime cards */
+.anime-card {
+    display: flex;
+    flex-direction: row;
+    gap: 1.5rem;
+    align-items: flex-start;
+    background: rgba(255,255,255,0.05);
+    border-radius: 15px;
+    border: 1px solid rgba(255,255,255,0.08);
     padding: 1rem;
-    border-radius: 10px;
-    margin-bottom: 1rem;
-    box-shadow: 0 1px 10px rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+}
+.anime-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0 20px rgba(0,150,255,0.2);
 }
 
+/* Image */
+.anime-card img {
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.15);
+}
+
+/* Links */
 a {
-    color: #58a6ff;
+    color: #82b1ff;
     text-decoration: none;
 }
-
 a:hover {
+    color: #bbdefb;
     text-decoration: underline;
 }
 
-.title-bar {
-    background: linear-gradient(90deg, #005fa3, #0078d4);
-    padding: 1.2rem 1.5rem;
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
-    text-align: center;
+/* Scrollbar customization */
+::-webkit-scrollbar {
+    width: 8px;
 }
-.title-bar h1 {
-    color: white;
-    margin: 0;
-    font-size: 1.8rem;
-    letter-spacing: 0.5px;
+::-webkit-scrollbar-thumb {
+    background: #3b3b52;
+    border-radius: 10px;
 }
-.subtitle {
-    color: #c9d1d9;
-    font-size: 0.95rem;
-    margin-top: 0.4rem;
+::-webkit-scrollbar-thumb:hover {
+    background: #5a5a7a;
 }
 </style>
 """, unsafe_allow_html=True)
 
-
-# ---------- UI Structure ----------
-
+# Title & Intro
+st.markdown("<div class='main-container'>", unsafe_allow_html=True)
+st.title("🎬 OtakuLens: Smart Anime Recommender")
 st.markdown("""
-<div class="title-bar">
-    <h1>Anime Recommender System</h1>
-    <div class="subtitle">Discover anime titles that resonate with your preferences.</div>
-</div>
-""", unsafe_allow_html=True)
+#### Find your next favorite anime, powered by AI.  
+Explore series similar to the ones you love — refined by genre, popularity, or score.
+""")
 
-# Genre filter
-all_genres = sorted(set(genre for genres in anime_df["genres"].str.split(", ") for genre in genres if genre))
-selected_genres = st.multiselect("Filter by Genres (Optional)", all_genres)
+# Sidebar Filters
+with st.sidebar:
+    st.markdown("## 🎭 Filter & Preferences")
+    all_genres = sorted(set(genre for genres in anime_df["genres"].str.split(", ") for genre in genres if genre))
+    selected_genres = st.multiselect("Select Genres", all_genres)
+    top_n = st.slider("Number of Recommendations", 3, 15, 6)
+    sort_by = st.selectbox("Sort By", ["Similarity", "Average Score", "Popularity"])
+    st.markdown("💡 **Tip:** Use genres to fine-tune your discovery.")
 
-# Main form
-selected_anime = st.selectbox("Select an Anime", sorted(anime_df["title"].dropna().unique()))
-top_n = st.slider("Number of Recommendations", 1, 10, 5)
-sort_by = st.selectbox("Sort Recommendations By", ["Similarity", "Average Score", "Popularity"])
+# Selection UI
+selected_anime = st.selectbox("🎞️ Choose Anime Title", sorted(anime_df["title"].dropna().unique()))
 
-# Recommend Button
-if st.button("Generate Recommendations"):
+# Recommendation Trigger
+if st.button("🔍 Discover Similar Anime"):
     results = recommend_anime(selected_anime, top_n=top_n)
     if selected_genres:
-        results = [rec for rec in results if any(g in rec["genres"].split(", ") for g in selected_genres)]
+        results = [r for r in results if any(g in r["genres"].split(", ") for g in selected_genres)]
+
     if sort_by == "Average Score":
         results = sorted(results, key=lambda x: x["score"] or 0, reverse=True)
     elif sort_by == "Popularity":
         results = sorted(results, key=lambda x: anime_df[anime_df["title"] == x["title"]]["popularity"].iloc[0], reverse=True)
 
     if not results:
-        st.warning("No recommendations found for the selected filters.")
+        st.warning("No matches found for the selected filters.")
     else:
-        st.subheader(f"Recommendations similar to **{selected_anime}**")
+        st.markdown(f"### ✨ Top {len(results)} Recommendations for **{selected_anime}**")
         for rec in results:
-            with st.container():
-                col1, col2 = st.columns([1, 3])
-                with col1:
-                    st.image(rec["cover"], use_container_width=True)
-                with col2:
-                    st.markdown(f"### [{rec['title']}]({rec['anilist_url']})")
-                    st.markdown(f"**Genres:** _{rec['genres']}_")
-                    st.markdown(f"**Average Score:** `{rec['score'] or 'N/A'}`")
-                    st.markdown(f"**Description:** {truncate_description(rec['description'])}")
+            st.markdown(f"""
+            <div class="anime-card">
+                <img src="{rec['cover']}" width="120">
+                <div>
+                    <h3><a href="{rec['anilist_url']}" target="_blank">{rec['title']}</a></h3>
+                    <p><b>Genres:</b> {rec['genres']}</p>
+                    <p><b>Average Score:</b> {rec['score'] or 'N/A'}</p>
+                    <p>{truncate_description(rec['description'])}</p>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)
