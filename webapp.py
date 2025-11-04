@@ -68,7 +68,7 @@ st.markdown("""
     backdrop-filter: blur(12px);
     border-radius: 18px;
     padding: 2.5rem;
-    margin: 1.5rem auto;
+    margin: 2rem auto;
     width: 90%;
     box-shadow: 0 0 25px rgba(0,0,0,0.4);
     transition: all 0.4s ease;
@@ -170,56 +170,54 @@ a:hover {
 </style>
 """, unsafe_allow_html=True)
 
-# 🧊 Main Glass Container
-with st.container():
-    st.markdown("<div class='main-container'>", unsafe_allow_html=True)
+# Sidebar
+with st.sidebar:
+    st.markdown("## 🎭 Filter & Preferences")
+    all_genres = sorted(set(genre for genres in anime_df["genres"].str.split(", ") for genre in genres if genre))
+    selected_genres = st.multiselect("Select Genres", all_genres)
+    top_n = st.slider("Number of Recommendations", 3, 15, 6)
+    sort_by = st.selectbox("Sort By", ["Similarity", "Average Score", "Popularity"])
+    st.markdown("💡 **Tip:** Use genres to fine-tune your discovery.")
 
-    st.title("🎬 AniSuggest: Smart Anime Recommender")
-    st.markdown("""
-    <p class='desc'>
-        Discover your next great anime — powered by intelligent similarity search.  
-        Filter by genre, popularity, or score for refined and elegant recommendations.
-    </p>
-    """, unsafe_allow_html=True)
+# 🧊 Main Glass Container with Title Inside
+st.markdown("<div class='main-container'>", unsafe_allow_html=True)
 
-    # Sidebar
-    with st.sidebar:
-        st.markdown("## 🎭 Filter & Preferences")
-        all_genres = sorted(set(genre for genres in anime_df["genres"].str.split(", ") for genre in genres if genre))
-        selected_genres = st.multiselect("Select Genres", all_genres)
-        top_n = st.slider("Number of Recommendations", 3, 15, 6)
-        sort_by = st.selectbox("Sort By", ["Similarity", "Average Score", "Popularity"])
-        st.markdown("💡 **Tip:** Use genres to fine-tune your discovery.")
+st.title("🎬 AniSuggest: Smart Anime Recommender")
+st.markdown("""
+<p class='desc'>
+    Discover your next great anime — powered by intelligent similarity search.  
+    Filter by genre, popularity, or score for refined and elegant recommendations.
+</p>
+""", unsafe_allow_html=True)
 
-    # Selection
-    selected_anime = st.selectbox("🎞️ Choose Anime Title", sorted(anime_df["title"].dropna().unique()))
+# Anime Selection & Recommendations
+selected_anime = st.selectbox("🎞️ Choose Anime Title", sorted(anime_df["title"].dropna().unique()))
 
-    # Button and Results
-    if st.button("🔍 Discover Similar Anime"):
-        results = recommend_anime(selected_anime, top_n=top_n)
-        if selected_genres:
-            results = [r for r in results if any(g in r["genres"].split(", ") for g in selected_genres)]
+if st.button("🔍 Discover Similar Anime"):
+    results = recommend_anime(selected_anime, top_n=top_n)
+    if selected_genres:
+        results = [r for r in results if any(g in r["genres"].split(", ") for g in selected_genres)]
 
-        if sort_by == "Average Score":
-            results = sorted(results, key=lambda x: x["score"] or 0, reverse=True)
-        elif sort_by == "Popularity":
-            results = sorted(results, key=lambda x: anime_df[anime_df["title"] == x["title"]]["popularity"].iloc[0], reverse=True)
+    if sort_by == "Average Score":
+        results = sorted(results, key=lambda x: x["score"] or 0, reverse=True)
+    elif sort_by == "Popularity":
+        results = sorted(results, key=lambda x: anime_df[anime_df["title"] == x["title"]]["popularity"].iloc[0], reverse=True)
 
-        if not results:
-            st.warning("No matches found for the selected filters.")
-        else:
-            st.markdown(f"### ✨ Top {len(results)} Recommendations for **{selected_anime}**")
-            for rec in results:
-                st.markdown(f"""
-                <div class="anime-card">
-                    <img src="{rec['cover']}" width="120">
-                    <div>
-                        <h3><a href="{rec['anilist_url']}" target="_blank">{rec['title']}</a></h3>
-                        <p><b>Genres:</b> {rec['genres']}</p>
-                        <p><b>Average Score:</b> {rec['score'] or 'N/A'}</p>
-                        <p>{truncate_description(rec['description'])}</p>
-                    </div>
+    if not results:
+        st.warning("No matches found for the selected filters.")
+    else:
+        st.markdown(f"### ✨ Top {len(results)} Recommendations for **{selected_anime}**")
+        for rec in results:
+            st.markdown(f"""
+            <div class="anime-card">
+                <img src="{rec['cover']}" width="120">
+                <div>
+                    <h3><a href="{rec['anilist_url']}" target="_blank">{rec['title']}</a></h3>
+                    <p><b>Genres:</b> {rec['genres']}</p>
+                    <p><b>Average Score:</b> {rec['score'] or 'N/A'}</p>
+                    <p>{truncate_description(rec['description'])}</p>
                 </div>
-                """, unsafe_allow_html=True)
+            </div>
+            """, unsafe_allow_html=True)
 
-    st.markdown("</div>", unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)
